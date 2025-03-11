@@ -1,0 +1,22 @@
+const express = require('express')
+const router = express.Router()
+const customerProductController = require('../controllers/adminCustomerProduct.controller')
+
+router.post('/getTableCustomerProduct', customerProductController.getTableCustomerProduct)
+router.post('/changeStatusCustomerProduct', customerProductController.changeStatusCustomerProduct)
+router.post('/getCSVTableAdminCustomerProduct', customerProductController.getCSVTableAdminCustomerProduct)
+router.get('/getTrackingDetails', customerProductController.getTrackingDetails)
+router.post('/closeAccountByAdmin', customerProductController.closeAccountByAdmin)
+router.get('/getCommisionData', customerProductController.getCommisionData)
+router.post('/addComissionToStaff', customerProductController.addComissionToStaff)
+router.post('/resetComissionToStaff', customerProductController.resetComissionToStaff)
+router.post('/accountOpenAndCloseByAdmin', customerProductController.accountOpenAndCloseByAdmin)
+router.post('/addCustomerProductFromExcel', customerProductController.addCustomerProductFromExcel)
+router.post('/getTableExpiredCustomerProduct', customerProductController.getTableExpiredCustomerProduct)
+router.post('/getCustomerProductDetails', customerProductController.getCustomerProductDetails)
+router.get('/getAllBranchName', customerProductController.getAllBranchName)
+router.get('/getBranchNameForSelect', customerProductController.getBranchNameForSelect)
+router.post('/updateCustomerProduct', customerProductController.updateCustomerProduct)
+router.post('/updateExpiredCustomerProduct', customerProductController.updateExpiredCustomerProduct)
+
+module.exports = router
