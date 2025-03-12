@@ -5,7 +5,8 @@ const {
   branchTbl,
   staffTbl,
   productTbl,
-  teacherTbl
+  teacherTbl,
+  studentTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -28,7 +29,9 @@ adminController.getTableTeacher = async function (req, res) {
     const customerTblResult = await teacherTbl.findAll({
       where: {
         [Op.or]: [
-          { name: { [Op.like]: '%' + searchValue + '%' } }
+          { name: { [Op.like]: '%' + searchValue + '%' } },
+          { mobile: { [Op.like]: '%' + searchValue + '%' } },
+          { email: { [Op.like]: '%' + searchValue + '%' } }
         ]
       },
       order: [['createdAt', 'desc']],
@@ -55,7 +58,9 @@ adminController.getTableTeacher = async function (req, res) {
     const totalRecords = await teacherTbl.count({
       where: {
         [Op.or]: [
-          { name: { [Op.like]: '%' + searchValue + '%' } }
+          { name: { [Op.like]: '%' + searchValue + '%' } },
+          { mobile: { [Op.like]: '%' + searchValue + '%' } },
+          { email: { [Op.like]: '%' + searchValue + '%' } }
         ]
       }
     })
@@ -164,5 +169,153 @@ adminController.changeStatusTeacher = async function (req, res) {
 }
 
 // api for student
+adminController.getTableStudent = async function (req, res) {
+  try {
+    const { currentPage, perPage, orderBy, orderDirection, searchValue } = req.body
+    const perPageRecords = parseInt(perPage)
+    const page = parseInt(currentPage)
+    let start = page * perPageRecords - perPageRecords
+    const customerTblResult = await studentTbl.findAll({
+      where: {
+        [Op.or]: [
+          { name: { [Op.like]: '%' + searchValue + '%' } },
+          { mobile: { [Op.like]: '%' + searchValue + '%' } },
+          { email: { [Op.like]: '%' + searchValue + '%' } }
+        ]
+      },
+      order: [['createdAt', 'desc']],
+      offset: start,
+      limit: perPage
+    })
+    start++
+    const tableData = customerTblResult.map((obj, index) => {
+        return {
+            srno: start++,
+            id: obj.get('id'),
+            name: obj.get('name'),
+            mobile: obj.get('mobile'),
+            email: obj.get('email'),
+            otherNumber: obj.get('otherNumber'),
+            address: obj.get('address'),   
+            pincode: obj.get('pincode'),   
+            city: obj.get('city'),   
+            status: obj.get('status'),
+            createdAt: obj.get('createdAt'),
+            updatedAt: obj.get('updatedAt')
+        }
+    })
+    const totalRecords = await studentTbl.count({
+      where: {
+        [Op.or]: [
+          { name: { [Op.like]: '%' + searchValue + '%' } },
+          { mobile: { [Op.like]: '%' + searchValue + '%' } },
+          { email: { [Op.like]: '%' + searchValue + '%' } }
+        ]
+      }
+    })
+    res.status(200).json({ totalRecords, tableData })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getTableStudent')
+  }
+}
+
+adminController.addStudent = async function (req, res) {
+    try {
+      const { name, mobile, otherNumber, email, address, pincode, city, password } = req.body;
+      const salt = await generateBcryptSalt()
+      const hashedPassword = await bcrypt.hash(password, salt)
+      await studentTbl
+        .create({
+          name,
+          mobile,
+          otherNumber,
+          email,
+          address,
+          pincode,
+          city,
+          password: hashedPassword,
+          status: 1,
+          userIdFk : req.uid
+        })
+        .then((obj) => {
+          res.status(201).send('saved to database')
+        })
+        .catch((err) => {
+          handleSequelizeError(err, res, 'adminController.addStudent')
+        })
+    } catch (err) {
+      handleSequelizeError(err, res, 'adminController.addStudent')
+    }
+}
+
+adminController.updateStudent = async function (req, res) {
+  try {
+    const { id, name, mobile, otherNumber, email, address, pincode, city, password } = req.body
+    if (password) {
+        const salt = await generateBcryptSalt()
+        const hashedPassword = await bcrypt.hash(password, salt)
+        await studentTbl.update({
+            name,
+            mobile,
+            otherNumber,
+            email,
+            address,
+            pincode,
+            city,
+            password: hashedPassword,
+            userIdFk : req.uid,
+        }, {
+          where: {
+            id
+          }
+        })
+        .then(() => {
+          res.status(201).send('saved to database')
+        })
+        .catch((err) => {
+          handleSequelizeError(err, res, 'adminController.updateStudent')
+        })
+      } else {
+        await studentTbl.update({
+            name,
+            mobile,
+            otherNumber,
+            email,
+            address,
+            pincode,
+            city,
+            userIdFk : req.uid
+        }, {
+          where: {
+            id
+          }
+        })
+        .then(() => {
+          res.status(201).send('saved to database')
+        })
+        .catch((err) => {
+          handleSequelizeError(err, res, 'adminController.updateStudent')
+        })
+      }
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.updateStudent')
+  }
+}
+
+adminController.changeStatusStudent = async function (req, res) {
+  try {
+    const { id, statusValue } = req.body
+    await studentTbl.update({ status: statusValue }, { where: { id } })
+      .then(() => {
+        res.status(200).send('Data updated successfully')
+      })
+      .catch((err) => {
+        handleSequelizeError(err, res, 'adminController.changeStatusStudent')
+      })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.changeStatusStudent')
+  }
+}
+
 
 module.exports = adminController

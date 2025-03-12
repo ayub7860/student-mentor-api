@@ -68,6 +68,11 @@ module.exports = (sequelize,DataTypes) => {
                 type: DataTypes.STRING(15),
                 comment: 'image'
             },
+            teacherName: {
+                field: 'teacher_name',
+                type: DataTypes.STRING(100),
+                comment: 'name of teacher'
+            },
             status: {
                 field: 'status',
                 type: DataTypes.TINYINT,
@@ -82,6 +87,15 @@ module.exports = (sequelize,DataTypes) => {
                     key: 'user_id_pk'
                 },
                 comment: 'user table foreign key'
+            },
+            teacherIdFk:{
+                field: 'teacher_id_fk',
+                type: DataTypes.INTEGER,
+                references: {
+                    model: 'tbl_teacher',
+                    key: 'teacher_id_pk'
+                },
+                comment: 'teacher table foreign key'
             },
         },
         {}
