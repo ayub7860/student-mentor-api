@@ -9,7 +9,7 @@ const rateLimit = require('express-rate-limit')
 const logger = require('morgan')
 const cookieParser = require('cookie-parser')
 const jwt = require('jsonwebtoken')
-const { NODE_ENV, PORT, ALLOWED_URL, SECRET_KEY_ADMIN, COOKIE_DOMAIN_API, SECRET_KEY_BRANCH, SECRET_KEY_STAFF } = require('./config')
+const { NODE_ENV, PORT, ALLOWED_URL, SECRET_KEY_ADMIN, COOKIE_DOMAIN_API, SECRET_KEY_BRANCH, SECRET_KEY_STAFF, SECRET_KEY_TEACHER, SECRET_KEY_STUDENT } = require('./config')
 const wlogger = require('./logger')
 // eslint-disable-next-line no-unused-vars
 const { websiteConfigTbl, customerProductTbl, staffTbl } = require('./sequelize')
@@ -19,8 +19,8 @@ const Op = Sequelize.Op
 const cron = require('node-cron')
 
 const withAdminAuth = require('./adminMiddleware')
-const withStaffAuth = require('./staffMiddleware')
-const withBranchAuth = require('./branchMiddleware')
+const withTeacherAuth = require('./teacherMiddleware')
+const withStudentAuth = require('./studentMiddleware')
 
 //* Include Router
 const publicRoute = require('./routes/public.routes')
@@ -138,11 +138,11 @@ app.get('/api/checkAdminToken', withAdminAuth, function (req, res) {
   res.json({ id: req.uid }).status(200)
 })
 
-app.get('/api/checkBranchToken', withBranchAuth, function (req, res) {
+app.get('/api/checkTeacherToken', withTeacherAuth, function (req, res) {
   res.json({ id: req.uid }).status(200)
 })
 
-app.get('/api/checkStaffToken', withStaffAuth, function (req, res) {
+app.get('/api/checkStudentToken', withStudentAuth, function (req, res) {
   res.json({ id: req.uid }).status(200)
 })
 
@@ -200,17 +200,17 @@ app.get('/api/verifyAdminToken', function (req, res) {
   }
 })
 
-app.get('/api/verifyBranchToken', function (req, res) {
+app.get('/api/verifyTeacherToken', function (req, res) {
   try {
     const token =
-            req.cookies.branch_auth_token ||
-            req.body.branch_auth_token ||
-            req.query.branch_auth_token ||
+            req.cookies.teacher_auth_token ||
+            req.body.teacher_auth_token ||
+            req.query.teacher_auth_token ||
             req.headers['x-access-token']
     if (!token) {
       res.status(401).send('Unauthorized: No token provided')
     } else {
-      jwt.verify(token, SECRET_KEY_BRANCH, function (err, decoded) {
+      jwt.verify(token, SECRET_KEY_TEACHER, function (err, decoded) {
         if (err) {
           res.status(401).send('Unauthorized: Invalid token')
         } else {
@@ -221,16 +221,16 @@ app.get('/api/verifyBranchToken', function (req, res) {
               uid: decoded.uid
             }
             if (NODE_ENV === 'development') {
-              const token = jwt.sign(payload, SECRET_KEY_BRANCH, {
+              const token = jwt.sign(payload, SECRET_KEY_TEACHER, {
                 expiresIn: '8760h'
               })
               const cookieOptions = {
                 maxAge: 31536000000,
                 httpOnly: true
               }
-              res.cookie('branch_auth_token', token, cookieOptions).sendStatus(200)
+              res.cookie('teacher_auth_token', token, cookieOptions).sendStatus(200)
             } else {
-              const token = jwt.sign(payload, SECRET_KEY_BRANCH, {
+              const token = jwt.sign(payload, SECRET_KEY_TEACHER, {
                 expiresIn: '12h'
               })
               const cookieOptions = {
@@ -241,7 +241,7 @@ app.get('/api/verifyBranchToken', function (req, res) {
               cookieOptions.sameSite = 'none'
               cookieOptions.secure = true
               cookieOptions.path = '/'
-              res.cookie('branch_auth_token', token, cookieOptions).sendStatus(200)
+              res.cookie('teacher_auth_token', token, cookieOptions).sendStatus(200)
             }
           } else res.status(200).json({ id: decoded.uid })
         }
@@ -253,17 +253,17 @@ app.get('/api/verifyBranchToken', function (req, res) {
   }
 })
 
-app.get('/api/verifyStaffToken', function (req, res) {
+app.get('/api/verifyStudentToken', function (req, res) {
   try {
     const token =
-            req.cookies.staff_auth_token ||
-            req.body.staff_auth_token ||
-            req.query.staff_auth_token ||
+            req.cookies.student_auth_token ||
+            req.body.student_auth_token ||
+            req.query.student_auth_token ||
             req.headers['x-access-token']
     if (!token) {
       res.status(401).send('Unauthorized: No token provided')
     } else {
-      jwt.verify(token, SECRET_KEY_STAFF, function (err, decoded) {
+      jwt.verify(token, SECRET_KEY_STUDENT, function (err, decoded) {
         if (err) {
           res.status(401).send('Unauthorized: Invalid token')
         } else {
@@ -274,16 +274,16 @@ app.get('/api/verifyStaffToken', function (req, res) {
               uid: decoded.uid
             }
             if (NODE_ENV === 'development') {
-              const token = jwt.sign(payload, SECRET_KEY_STAFF, {
+              const token = jwt.sign(payload, SECRET_KEY_STUDENT, {
                 expiresIn: '8760h'
               })
               const cookieOptions = {
                 maxAge: 31536000000,
                 httpOnly: true
               }
-              res.cookie('staff_auth_token', token, cookieOptions).sendStatus(200)
+              res.cookie('student_auth_token', token, cookieOptions).sendStatus(200)
             } else {
-              const token = jwt.sign(payload, SECRET_KEY_STAFF, {
+              const token = jwt.sign(payload, SECRET_KEY_STUDENT, {
                 expiresIn: '12h'
               })
               const cookieOptions = {
@@ -294,7 +294,7 @@ app.get('/api/verifyStaffToken', function (req, res) {
               cookieOptions.sameSite = 'none'
               cookieOptions.secure = true
               cookieOptions.path = '/'
-              res.cookie('staff_auth_token', token, cookieOptions).sendStatus(200)
+              res.cookie('student_auth_token', token, cookieOptions).sendStatus(200)
             }
           } else res.status(200).json({ id: decoded.uid })
         }

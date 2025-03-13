@@ -1,10 +1,6 @@
 const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const {
-  customerTbl,
-  branchTbl,
-  staffTbl,
-  productTbl,
   teacherTbl,
   studentTbl
 } = require('../sequelize')
