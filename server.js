@@ -30,6 +30,9 @@ const adminRoute = require('./routes/admin.routes')
 const adminProfileRoute = require('./routes/adminProfile.routes')
 const userRoute = require('./routes/user.routes')
 
+const teacherRoute = require('./routes/teacher.routes')
+const studentRoute = require('./routes/student.routes')
+
 
 function normalizePort (val) {
   const port = parseInt(val, 10)
@@ -312,6 +315,9 @@ app.use('/api/publicApi', publicRoute)
 app.use('/api/adminApi', withAdminAuth, adminRoute)
 app.use('/api/adminProfileApi', withAdminAuth, adminProfileRoute)
 app.use('/api/userApi', withAdminAuth, userRoute)
+
+app.use('/api/teacherApi', withTeacherAuth, teacherRoute)
+app.use('/api/studentApi', withStudentAuth, studentRoute)
 
 
 app.get('/', async function (req, res) {

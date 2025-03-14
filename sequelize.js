@@ -6,6 +6,7 @@ const wallpaperModel = require('./models/wallpaper.model')
 const userModel = require('./models/user.model')
 const teacherModel = require('./models/teacher.model')
 const studentModel = require('./models/student.model')
+const noticeModel = require('./models/notice.model')
 
 
 const Op = Sequelize.Op
@@ -69,6 +70,7 @@ const wallpaperTbl = wallpaperModel(sequelize, Sequelize)
 const userTbl = userModel(sequelize, Sequelize)
 const teacherTbl = teacherModel(sequelize, Sequelize)
 const studentTbl = studentModel(sequelize, Sequelize)
+const noticeTbl = noticeModel(sequelize, Sequelize)
 
 
 // customerTbl.hasMany(staffTbl, {
@@ -88,18 +90,6 @@ module.exports = {
   userTbl,
   teacherTbl,
   studentTbl,
+  noticeTbl,
   
-  // branchTbl,
-  // staffTbl,
-  // staffPayoutTbl,
-  // productTbl,
-  // customerTbl,
-  // customerProductTbl,
-  // customerProductTrackingTbl,
-  // customerBranchShiftTrackingTbl,
-  // customerWalkinTrackingTbl,
-  // staffTrackingTbl,
-  // recoveryTbl,
-  // recoveryTrackingTbl,
-
 }

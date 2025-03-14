@@ -2,7 +2,8 @@ const Sequelize = require('sequelize')
 const Op = Sequelize.Op
 const {
   teacherTbl,
-  studentTbl
+  studentTbl,
+  noticeTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -189,6 +190,9 @@ adminController.getTableStudent = async function (req, res) {
             srno: start++,
             id: obj.get('id'),
             name: obj.get('name'),
+            teacherName: obj.get('teacherName'),
+            batchName: obj.get('batchName'),
+            rollNo: obj.get('rollNo'),
             mobile: obj.get('mobile'),
             email: obj.get('email'),
             otherNumber: obj.get('otherNumber'),
@@ -217,7 +221,7 @@ adminController.getTableStudent = async function (req, res) {
 
 adminController.addStudent = async function (req, res) {
     try {
-      const { name, mobile, otherNumber, email, address, pincode, city, password } = req.body;
+      const { name, mobile, rollNo, batchName, otherNumber, email, address, password, teacherName, teacherId } = req.body;
       const salt = await generateBcryptSalt()
       const hashedPassword = await bcrypt.hash(password, salt)
       await studentTbl
@@ -227,11 +231,13 @@ adminController.addStudent = async function (req, res) {
           otherNumber,
           email,
           address,
-          pincode,
-          city,
+          batchName,
+          teacherName,
+          rollNo,
           password: hashedPassword,
           status: 1,
-          userIdFk : req.uid
+          userIdFk : req.uid,
+          teacherIdFk: teacherId
         })
         .then((obj) => {
           res.status(201).send('saved to database')
@@ -246,7 +252,7 @@ adminController.addStudent = async function (req, res) {
 
 adminController.updateStudent = async function (req, res) {
   try {
-    const { id, name, mobile, otherNumber, email, address, pincode, city, password } = req.body
+    const { id, name, mobile, otherNumber, email, address, rollNo, batchName, password, teacherName, teacherId } = req.body
     if (password) {
         const salt = await generateBcryptSalt()
         const hashedPassword = await bcrypt.hash(password, salt)
@@ -256,10 +262,11 @@ adminController.updateStudent = async function (req, res) {
             otherNumber,
             email,
             address,
-            pincode,
-            city,
+            rollNo, batchName,
             password: hashedPassword,
             userIdFk : req.uid,
+            teacherName,
+            teacherIdFk: teacherId
         }, {
           where: {
             id
@@ -278,9 +285,10 @@ adminController.updateStudent = async function (req, res) {
             otherNumber,
             email,
             address,
-            pincode,
-            city,
-            userIdFk : req.uid
+            rollNo, batchName,
+            userIdFk : req.uid,
+            teacherName,
+            teacherIdFk: teacherId
         }, {
           where: {
             id
@@ -313,5 +321,144 @@ adminController.changeStatusStudent = async function (req, res) {
   }
 }
 
+adminController.getAllTeacherName = async function (req, res) {
+  try {
+    const materialStdTblResults = await teacherTbl.findAll({
+      where: {
+        status: 1
+      },
+      order: [['createdAt', 'desc']],
+      limit: 50
+    })
+    const result = materialStdTblResults.map(obj => ({
+      label: obj.name,
+      value: obj.id,
+    }))
+      res.status(200).json(result)
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getAllTeacherName')
+  }
+}
+
+adminController.getTeacherNameForSelect = async function (req, res) {
+  try {
+    const { word } = req.query
+    const materialStdTblResults = await teacherTbl.findAll({
+      where: {
+        [Op.and]: [{ status: 1 }],
+        [Op.or]: [{ name: { [Op.like]: '%' + word + '%' } }]
+      },
+      limit: 15
+    })
+    const result = materialStdTblResults.map(obj => ({
+      label: obj.name,
+      value: obj.id,
+    }))
+    res.status(200).json(result)
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getTeacherNameForSelect')
+  }
+}
+
+
+// api for notice
+adminController.getTableNotice = async function (req, res) {
+  try {
+    const { currentPage, perPage, orderBy, orderDirection, searchValue } = req.body
+    const perPageRecords = parseInt(perPage)
+    const page = parseInt(currentPage)
+    let start = page * perPageRecords - perPageRecords
+    const customerTblResult = await noticeTbl.findAll({
+      where: {
+        [Op.or]: [
+          { title: { [Op.like]: '%' + searchValue + '%' } },
+        ]
+      },
+      order: [['createdAt', 'desc']],
+      offset: start,
+      limit: perPage
+    })
+    start++
+    const tableData = customerTblResult.map((obj, index) => {
+        return {
+            srno: start++,
+            id: obj.get('id'),
+            title: obj.get('title'),
+            description: obj.get('description'),
+            type: obj.get('type'),
+            status: obj.get('status'),
+            createdAt: obj.get('createdAt'),
+            updatedAt: obj.get('updatedAt')
+        }
+    })
+    const totalRecords = await noticeTbl.count({
+      where: {
+        [Op.or]: [
+          { title: { [Op.like]: '%' + searchValue + '%' } },
+        ]
+      }
+    })
+    res.status(200).json({ totalRecords, tableData })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getTableNotice')
+  }
+}
+
+adminController.addNotice = async function (req, res) {
+    try {
+      const { title, description, type } = req.body;
+      await noticeTbl
+        .create({
+          title, description, type,
+          status: 1,
+          userIdFk : req.uid
+        })
+        .then((obj) => {
+          res.status(201).send('saved to database')
+        })
+        .catch((err) => {
+          handleSequelizeError(err, res, 'adminController.addNotice')
+        })
+    } catch (err) {
+      handleSequelizeError(err, res, 'adminController.addNotice')
+    }
+}
+
+adminController.updateNotice = async function (req, res) {
+  try {
+    const { id, title, description, type } = req.body
+    await noticeTbl.update({
+      title, description, type,
+      userIdFk : req.uid
+  }, {
+    where: {
+      id
+    }
+  })
+  .then(() => {
+    res.status(201).send('saved to database')
+  })
+  .catch((err) => {
+    handleSequelizeError(err, res, 'adminController.updateNotice')
+  })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.updateNotice')
+  }
+}
+
+adminController.changeStatusNotice = async function (req, res) {
+  try {
+    const { id, statusValue } = req.body
+    await noticeTbl.update({ status: statusValue }, { where: { id } })
+      .then(() => {
+        res.status(200).send('Data updated successfully')
+      })
+      .catch((err) => {
+        handleSequelizeError(err, res, 'adminController.changeStatusNotice')
+      })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.changeStatusNotice')
+  }
+}
 
 module.exports = adminController

@@ -18,6 +18,16 @@ module.exports = (sequelize,DataTypes) => {
                 type: DataTypes.STRING(100),
                 comment: 'name'
             },
+            rollNo: {
+                field: 'roll_no',
+                type: DataTypes.STRING(20),
+                comment: 'rollNo'
+            },
+            batchName: {
+                field: 'batch_name',
+                type: DataTypes.STRING(20),
+                comment: 'batch name'
+            },
             mobile: {
                 field: 'mobile',
                 type: DataTypes.STRING(12),
