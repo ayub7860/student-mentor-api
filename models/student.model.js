@@ -83,6 +83,52 @@ module.exports = (sequelize,DataTypes) => {
                 type: DataTypes.STRING(100),
                 comment: 'name of teacher'
             },
+            companyName: {
+                field: 'company_name',
+                type: DataTypes.STRING(100),
+                comment: 'name of the company'
+            },
+            companyLocation: {
+                field: 'company_location',
+                type: DataTypes.TEXT,
+                comment: 'location of the company'
+            },
+            projectName: {
+                field: 'project_name',
+                type: DataTypes.STRING(150),
+                comment: 'name of the project'
+            },
+            projectDescription: {
+                field: 'project_description',
+                type: DataTypes.TEXT,
+                comment: 'description of the project'
+            },
+            joiningDate: {
+                field: 'joining_date',
+                type: DataTypes.DATE,
+                comment: 'internship joining date'
+            },
+            endDate: {
+                field: 'end_date',
+                type: DataTypes.DATE,
+                comment: 'internship end date'
+            },
+            internshipLetter: {
+                field: 'internship_letter',
+                type: DataTypes.STRING(255),
+                comment: 'internship_letter'
+            },
+            projectLetter: {
+                field: 'project_letter',
+                type: DataTypes.STRING(255),
+                comment: 'project_letter'
+            },
+            isCompanyApproved: {
+                field: 'is_company_approved',
+                type: DataTypes.TINYINT,
+                defaultValue: 3,
+                comment: '1-approved 2-reject 3-pending'
+            },
             status: {
                 field: 'status',
                 type: DataTypes.TINYINT,

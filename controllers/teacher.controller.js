@@ -49,7 +49,16 @@ teacherController.getTableStudent = async function (req, res) {
             otherNumber: obj.get('otherNumber'),
             address: obj.get('address'),   
             pincode: obj.get('pincode'),   
-            city: obj.get('city'),   
+            city: obj.get('city'),
+            companyName: obj.get('companyName'),
+            companyLocation: obj.get('companyLocation'),
+            projectName: obj.get('projectName'),
+            projectDescription: obj.get('projectDescription'),
+            joiningDate: obj.get('joiningDate'),
+            endDate: obj.get('endDate'),
+            projectLetter: obj.get('projectLetter'),
+            internshipLetter: obj.get('internshipLetter'),
+            isCompanyApproved: obj.get('isCompanyApproved'),
             status: obj.get('status'),
             createdAt: obj.get('createdAt'),
             updatedAt: obj.get('updatedAt')
@@ -165,6 +174,21 @@ teacherController.changeStatusStudent = async function (req, res) {
       })
   } catch (err) {
     handleSequelizeError(err, res, 'teacherController.changeStatusStudent')
+  }
+}
+
+teacherController.approvedStatus = async function (req, res) {
+  try {
+    const { id, statusValue } = req.body
+    await studentTbl.update({ isCompanyApproved: statusValue }, { where: { id } })
+      .then(() => {
+        res.status(200).send('Data updated successfully')
+      })
+      .catch((err) => {
+        handleSequelizeError(err, res, 'teacherController.approvedStatus')
+      })
+  } catch (err) {
+    handleSequelizeError(err, res, 'teacherController.approvedStatus')
   }
 }
 

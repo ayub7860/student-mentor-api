@@ -16,6 +16,17 @@ const generateBcryptSalt = async () => {
   
 const studentController = {}
 
+studentController.getMyProfile = async function (req, res) {
+  try {
+    const studentTblObj = await studentTbl.findByPk(req.uid);
+    if (studentTblObj) {
+      res.status(200).json(studentTblObj)
+    } else res.status(404).send('unable to get record')
+  } catch (err) {
+    handleSequelizeError(err, res, 'studentController.getMyProfile')
+  }
+}
+
 // api for notice
 studentController.getTableNotice = async function (req, res) {
   try {
@@ -61,6 +72,33 @@ studentController.getTableNotice = async function (req, res) {
   } catch (err) {
     handleSequelizeError(err, res, 'studentController.getTableNotice')
   }
+}
+
+// api for update company details
+studentController.updateCompanyProfile = async function (req, res) {
+    try {
+      const { 
+        companyName, companyLocation, projectName,
+        projectDescription, joiningDate, endDate, internshipLetter, projectLetter
+      } = req.body;
+      
+      await studentTbl
+        .update({
+          companyName, companyLocation, projectName,
+          projectDescription, joiningDate, endDate, internshipLetter, projectLetter,
+        },  {
+          where: {
+            id: req.uid
+          }})
+        .then((obj) => {
+          res.status(201).send('saved to database')
+        })
+        .catch((err) => {
+          handleSequelizeError(err, res, 'studentController.updateCompanyProfile')
+        })
+    } catch (err) {
+      handleSequelizeError(err, res, 'studentController.updateCompanyProfile')
+    }
 }
 
 module.exports = studentController

@@ -10,6 +10,7 @@ const {
 } = require('../sequelize')
 const jwt = require('jsonwebtoken')
 const path = require('path')
+const multer = require('multer')
 const otpGenerator = require('../lib/otpGenerator')
 const CryptoJS = require('crypto-js')
 const crypto = require('crypto')
@@ -25,7 +26,8 @@ const {
   SECRET_KEY_STAFF,
   SECRET_KEY_BRANCH,
   SECRET_KEY_STUDENT,
-  SECRET_KEY_TEACHER
+  SECRET_KEY_TEACHER,
+  PUBLIC_SIGNATURE_DOCUMENT_PATH
 } = require('../config')
 const axios = require('axios')
 const sha512 = require('js-sha512')
@@ -38,6 +40,84 @@ const tlClient = axios.create({
 })
 
 const publicController = {}
+
+
+const storageOptions = {
+  destination: function (req, file, cb) {
+    cb(null, PUBLIC_SIGNATURE_DOCUMENT_PATH)
+  },
+  filename: async function (req, file, cb) {
+    try {
+      const detailsObj = await websiteConfigTbl.findByPk(1)
+      const srno = detailsObj.documentUploadCounter
+      await detailsObj.update({ documentUploadCounter: srno + 1 })
+      const uniqueId = crypto.randomBytes(3).toString('hex')
+      const filename = uniqueId + srno + path.extname(file.originalname)
+      cb(null, filename)
+    } catch (error) {
+      cb(error)
+    }
+  }
+}
+
+const fileFilter = function (req, file, cb) {
+  const allowedExtensions = ['.png', '.jpg', '.jpeg', '.pdf', '.JPG', '.JPEG', '.PDF', '.webp', '.gif', '.bmp', '.tiff', '.tif', '.svg']
+  const ext = path.extname(file.originalname)
+  if (allowedExtensions.includes(ext)) {
+    cb(null, true)
+  } else {
+    cb(new Error('Invalid files'))
+  }
+}
+
+const limits = {
+  fileSize: 1024 * 1024 * 15
+}
+
+const documentUpload = multer({
+  storage: multer.diskStorage(storageOptions),
+  fileFilter,
+  limits
+}).single('file')
+
+publicController.uploadDocuments = async function (req, res) {
+  try {
+    documentUpload(req, res, function (err) {
+      if (err instanceof multer.MulterError || err) {
+        if (err.code === 'LIMIT_FILE_SIZE') return res.status(413).json({ error: 'File size exceeds the limit' })
+        else handleSequelizeError(err, res, 'publicController.uploadDocuments')
+      } else if (req.file && req.file.filename) {
+        res.status(200).json({ fname: req.file.filename })
+      } else handleSequelizeError(new Error('No files were uploaded'), res, 'publicController.uploadDocuments')
+    })
+  } catch (err) {
+    if (err.message === 'Invalid files') return res.status(415).json({ error: 'Invalid files' })
+    else handleSequelizeError(err, res, 'publicController.uploadDocuments')
+  }
+}
+
+publicController.downloadDocument = async function (req, res) {
+  try {
+    console.log('req.query.name', req.query.name)
+    const options = {
+      root: path.join(__dirname, '../public/image'),
+      dotfiles: 'deny',
+      headers: {
+        'x-timestamp': Date.now(),
+        'x-sent': true
+      }
+    }
+    const fileName = req.query.name
+    res.sendFile(fileName, options, function (err) {
+      if (err) {
+        wlogger.error('publicController.downloadDocument: Error: ' + err)
+      }
+    })
+  } catch (err) {
+    handleSequelizeError(err, res, 'publicController.downloadDocument')
+  }
+}
+
 
 publicController.downloadKycDocument = async function (req, res) {
   try {
@@ -439,26 +519,26 @@ publicController.logoutStaff = async function (req, res) {
   res.cookie('staff_auth_token', 'thoy', cookieOptions).sendStatus(200)
 }
 
-publicController.downloadDocument = async function (req, res) {
-  try {
-    const options = {
-      root: path.join(__dirname, '../public/signature'),
-      dotfiles: 'deny',
-      headers: {
-        'x-timestamp': Date.now(),
-        'x-sent': true
-      }
-    }
-    const fileName = req.query.name
-    res.sendFile(fileName, options, function (err) {
-      if (err) {
-        wlogger.error('publicController.downloadDocument: Error: ' + err)
-      }
-    })
-  } catch (err) {
-    handleSequelizeError(err, res, 'publicController.downloadDocument')
-  }
-}
+// publicController.downloadDocument = async function (req, res) {
+//   try {
+//     const options = {
+//       root: path.join(__dirname, '../public/signature'),
+//       dotfiles: 'deny',
+//       headers: {
+//         'x-timestamp': Date.now(),
+//         'x-sent': true
+//       }
+//     }
+//     const fileName = req.query.name
+//     res.sendFile(fileName, options, function (err) {
+//       if (err) {
+//         wlogger.error('publicController.downloadDocument: Error: ' + err)
+//       }
+//     })
+//   } catch (err) {
+//     handleSequelizeError(err, res, 'publicController.downloadDocument')
+//   }
+// }
 
 
 publicController.verifyPassword = async function (req, res) {
