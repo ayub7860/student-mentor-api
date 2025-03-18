@@ -3,7 +3,8 @@ const Op = Sequelize.Op
 const {
   teacherTbl,
   studentTbl,
-  noticeTbl
+  noticeTbl,
+  weeklyReportTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -100,5 +101,96 @@ studentController.updateCompanyProfile = async function (req, res) {
       handleSequelizeError(err, res, 'studentController.updateCompanyProfile')
     }
 }
+
+// api for weekly report 
+studentController.getTableWeeklyReport = async function (req, res) {
+  try {
+    const { currentPage, perPage, orderBy, orderDirection, searchValue } = req.body
+    const perPageRecords = parseInt(perPage)
+    const page = parseInt(currentPage)
+    let start = page * perPageRecords - perPageRecords
+    const customerTblResult = await weeklyReportTbl.findAll({
+      where: {
+        [Op.or]: [
+          { task: { [Op.like]: '%' + searchValue + '%' } },
+        ],
+        status: 1
+      },
+      order: [['createdAt', 'desc']],
+      offset: start,
+      limit: perPage
+    })
+    start++
+    const tableData = customerTblResult.map((obj, index) => {
+        return {
+            srno: start++,
+            id: obj.get('id'),
+            task: obj.get('task'),
+            description: obj.get('description'),
+            fromDate: obj.get('fromDate'),
+            toDate: obj.get('toDate'),
+            teacherName: obj.get('teacherName'),
+            status: obj.get('status'),
+            createdAt: obj.get('createdAt'),
+            updatedAt: obj.get('updatedAt')
+        }
+    })
+    const totalRecords = await weeklyReportTbl.count({
+      where: {
+        [Op.or]: [
+          { task: { [Op.like]: '%' + searchValue + '%' } },
+        ],
+        status: 1
+      }
+    })
+    res.status(200).json({ totalRecords, tableData })
+  } catch (err) {
+    handleSequelizeError(err, res, 'studentController.getTableWeeklyReport')
+  }
+}
+
+studentController.addWeeklyReport = async function (req, res) {
+  try {
+    const { fromDate, toDate, description, task } = req.body;
+    const studentData = await studentTbl.findByPk(req.uid);
+    await weeklyReportTbl
+      .create({
+        fromDate, toDate, description, task,
+        status: 1,
+        teacherIdFk: studentData.teacherIdFk,
+        studentIdFk : req.uid,
+      })
+      .then((obj) => {
+        res.status(201).send('saved to database')
+      })
+      .catch((err) => {
+        handleSequelizeError(err, res, 'studentController.addWeeklyReport')
+      })
+  } catch (err) {
+    handleSequelizeError(err, res, 'studentController.addWeeklyReport')
+  }
+}
+
+studentController.updateWeeklyReport = async function (req, res) {
+try {
+  const { id, fromDate, toDate, description, task  } = req.body
+  await weeklyReportTbl.update({
+    fromDate, toDate, description, task ,
+  }, {
+    where: {
+      id
+    }
+  })
+  .then(() => {
+    res.status(201).send('saved to database')
+  })
+  .catch((err) => {
+    handleSequelizeError(err, res, 'studentController.updateWeeklyReport')
+  })
+} catch (err) {
+  handleSequelizeError(err, res, 'studentController.updateWeeklyReport')
+}
+}
+
 
 module.exports = studentController

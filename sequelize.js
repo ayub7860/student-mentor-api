@@ -7,6 +7,7 @@ const userModel = require('./models/user.model')
 const teacherModel = require('./models/teacher.model')
 const studentModel = require('./models/student.model')
 const noticeModel = require('./models/notice.model')
+const weeklyReportModel = require('./models/weeklyReport.model')
 
 
 const Op = Sequelize.Op
@@ -71,6 +72,7 @@ const userTbl = userModel(sequelize, Sequelize)
 const teacherTbl = teacherModel(sequelize, Sequelize)
 const studentTbl = studentModel(sequelize, Sequelize)
 const noticeTbl = noticeModel(sequelize, Sequelize)
+const weeklyReportTbl = weeklyReportModel(sequelize, Sequelize)
 
 
 // customerTbl.hasMany(staffTbl, {
@@ -91,5 +93,6 @@ module.exports = {
   teacherTbl,
   studentTbl,
   noticeTbl,
+  weeklyReportTbl,
   
 }
