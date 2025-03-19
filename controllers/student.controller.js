@@ -130,6 +130,7 @@ studentController.getTableWeeklyReport = async function (req, res) {
             fromDate: obj.get('fromDate'),
             toDate: obj.get('toDate'),
             teacherName: obj.get('teacherName'),
+            isApprovedByTeacher: obj.get('isApprovedByTeacher'),
             status: obj.get('status'),
             createdAt: obj.get('createdAt'),
             updatedAt: obj.get('updatedAt')
@@ -159,6 +160,7 @@ studentController.addWeeklyReport = async function (req, res) {
         status: 1,
         teacherIdFk: studentData.teacherIdFk,
         studentIdFk : req.uid,
+        isApprovedByTeacher: 3
       })
       .then((obj) => {
         res.status(201).send('saved to database')

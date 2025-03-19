@@ -12,6 +12,10 @@ router.post('/approvedStatus', teacherController.approvedStatus)
 // notice routes
 router.post('/getTableNotice', teacherController.getTableNotice)
 
+//report
+router.post('/getTableReport', teacherController.getTableReport)
+router.post('/approveStudentReport', teacherController.approveStudentReport)
+
 
 
 module.exports = router

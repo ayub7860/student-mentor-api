@@ -3,7 +3,8 @@ const Op = Sequelize.Op
 const {
   teacherTbl,
   studentTbl,
-  noticeTbl
+  noticeTbl,
+  weeklyReportTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -239,4 +240,67 @@ teacherController.getTableNotice = async function (req, res) {
   }
 }
 
+// report
+teacherController.getTableReport = async function (req, res) {
+  try {
+    const { currentPage, perPage, orderBy, orderDirection, searchValue } = req.body
+    const perPageRecords = parseInt(perPage)
+    const page = parseInt(currentPage)
+    let start = page * perPageRecords - perPageRecords
+    const customerTblResult = await weeklyReportTbl.findAll({
+      where: {
+        [Op.or]: [
+          { task: { [Op.like]: '%' + searchValue + '%' } },
+        ],
+        [Op.and]: [
+            { teacherIdFk: req.uid },
+        ],
+      },
+      order: [['createdAt', 'desc']],
+      offset: start,
+      limit: perPage
+    })
+    start++
+    const tableData = customerTblResult.map((obj, index) => {
+        return {
+          srno: start++,
+          id: obj.get('id'),
+          task: obj.get('task'),
+          description: obj.get('description'),
+          fromDate: obj.get('fromDate'),
+          toDate: obj.get('toDate'),
+          teacherName: obj.get('teacherName'),
+          isApprovedByTeacher: obj.get('isApprovedByTeacher'),
+          status: obj.get('status'),
+          createdAt: obj.get('createdAt'),
+          updatedAt: obj.get('updatedAt')
+        }
+    })
+    const totalRecords = await weeklyReportTbl.count({
+      where: {
+        [Op.or]: [
+          { task: { [Op.like]: '%' + searchValue + '%' } },
+        ]
+      }
+    })
+    res.status(200).json({ totalRecords, tableData })
+  } catch (err) {
+    handleSequelizeError(err, res, 'teacherController.getTableReport')
+  }
+}
+
+teacherController.approveStudentReport = async function (req, res) {
+  try {
+    const { id } = req.body
+    await weeklyReportTbl.update({ isApprovedByTeacher: 1 }, { where: { id } })
+      .then(() => {
+        res.status(200).send('Data updated successfully')
+      })
+      .catch((err) => {
+        handleSequelizeError(err, res, 'teacherController.approveStudentReport')
+      })
+  } catch (err) {
+    handleSequelizeError(err, res, 'teacherController.approveStudentReport')
+  }
+}
 module.exports = teacherController
