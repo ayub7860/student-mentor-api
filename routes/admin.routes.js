@@ -2,6 +2,9 @@ const express = require('express')
 const router = express.Router()
 const adminController = require('../controllers/admin.controller')
 
+//profile
+router.get('/getMyProfile', adminController.getMyProfile)
+
 /// teacher routes
 router.post('/getTableTeacher', adminController.getTableTeacher)
 router.post('/addTeacher', adminController.addTeacher)
@@ -21,6 +24,9 @@ router.post('/getTableNotice', adminController.getTableNotice)
 router.post('/addNotice', adminController.addNotice)
 router.post('/changeStatusNotice', adminController.changeStatusNotice)
 router.post('/updateNotice', adminController.updateNotice)
+
+// report api
+router.post('/getTableReport', adminController.getTableReport)
 
 
 module.exports = router

@@ -3,7 +3,9 @@ const Op = Sequelize.Op
 const {
   teacherTbl,
   studentTbl,
-  noticeTbl
+  noticeTbl,
+  weeklyReportTbl,
+  userTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -15,6 +17,27 @@ const generateBcryptSalt = async () => {
   }
   
 const adminController = {}
+
+adminController.getMyProfile = async function (req, res) {
+  try {
+    const userTblObj = await userTbl.findByPk(req.uid);
+    const totalTeacher = await teacherTbl.count();
+    const totalStudent = await studentTbl.count();
+    if (userTblObj) {
+      res.status(200).json({
+        userName: userTblObj.userName,
+        personName: userTblObj.personName,
+        mobile: userTblObj.mobile,
+        email: userTblObj.email,
+        totalTeacher,
+        totalStudent
+      })
+    } else res.status(404).send('unable to get record')
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getMyProfile')
+  }
+}
+
 
 // api for teacher 
 adminController.getTableTeacher = async function (req, res) {
@@ -360,7 +383,6 @@ adminController.getTeacherNameForSelect = async function (req, res) {
   }
 }
 
-
 // api for notice
 adminController.getTableNotice = async function (req, res) {
   try {
@@ -461,4 +483,50 @@ adminController.changeStatusNotice = async function (req, res) {
   }
 }
 
+// report
+adminController.getTableReport = async function (req, res) {
+  try {
+    const { currentPage, perPage, orderBy, orderDirection, searchValue } = req.body
+    const perPageRecords = parseInt(perPage)
+    const page = parseInt(currentPage)
+    let start = page * perPageRecords - perPageRecords
+    const customerTblResult = await weeklyReportTbl.findAll({
+      where: {
+        [Op.or]: [
+          { task: { [Op.like]: '%' + searchValue + '%' } },
+        ],
+      },
+      order: [['createdAt', 'desc']],
+      offset: start,
+      limit: perPage
+    })
+    start++
+    const tableData = customerTblResult.map((obj, index) => {
+        return {
+          srno: start++,
+          id: obj.get('id'),
+          task: obj.get('task'),
+          description: obj.get('description'),
+          fromDate: obj.get('fromDate'),
+          toDate: obj.get('toDate'),
+          teacherName: obj.get('teacherName'),
+          studentName: obj.get('studentName'),
+          isApprovedByTeacher: obj.get('isApprovedByTeacher'),
+          status: obj.get('status'),
+          createdAt: obj.get('createdAt'),
+          updatedAt: obj.get('updatedAt')
+        }
+    })
+    const totalRecords = await weeklyReportTbl.count({
+      where: {
+        [Op.or]: [
+          { task: { [Op.like]: '%' + searchValue + '%' } },
+        ]
+      }
+    })
+    res.status(200).json({ totalRecords, tableData })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getTableReport')
+  }
+}
 module.exports = adminController

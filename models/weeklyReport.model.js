@@ -38,6 +38,11 @@ module.exports = (sequelize,DataTypes) => {
                 defaultValue: 1,
                 comment: '1-approved, 2-not approved, 3-pending'
             },
+            studentName: {
+                field: 'student_name',
+                type: DataTypes.STRING(250),
+                comment: 'student name'
+            },  
             teacherName: {
                 field: 'teacher_name',
                 type: DataTypes.STRING(250),

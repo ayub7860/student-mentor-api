@@ -270,6 +270,7 @@ teacherController.getTableReport = async function (req, res) {
           fromDate: obj.get('fromDate'),
           toDate: obj.get('toDate'),
           teacherName: obj.get('teacherName'),
+          studentName: obj.get('studentName'),
           isApprovedByTeacher: obj.get('isApprovedByTeacher'),
           status: obj.get('status'),
           createdAt: obj.get('createdAt'),

@@ -20,8 +20,16 @@ const studentController = {}
 studentController.getMyProfile = async function (req, res) {
   try {
     const studentTblObj = await studentTbl.findByPk(req.uid);
+    const noticeTblObj = await noticeTbl.findAll({
+      where: {
+        type: { [Op.in]: [2, 3] }, // Fetch only type 2 or 3
+        status: 1
+      },
+      limit: 1,
+      order: [[ 'updatedAt', 'ASC']]
+    });
     if (studentTblObj) {
-      res.status(200).json(studentTblObj)
+      res.status(200).json({ studentTblObj, noticeTblObj})
     } else res.status(404).send('unable to get record')
   } catch (err) {
     handleSequelizeError(err, res, 'studentController.getMyProfile')
@@ -154,11 +162,14 @@ studentController.addWeeklyReport = async function (req, res) {
   try {
     const { fromDate, toDate, description, task } = req.body;
     const studentData = await studentTbl.findByPk(req.uid);
+    const teacherData = await teacherTbl.findByPk(studentData.teacherIdFk);
     await weeklyReportTbl
       .create({
         fromDate, toDate, description, task,
         status: 1,
         teacherIdFk: studentData.teacherIdFk,
+        studentName: studentData.name,
+        teacherName: teacherData.name,
         studentIdFk : req.uid,
         isApprovedByTeacher: 3
       })
