@@ -16,6 +16,7 @@ router.post('/getTableNotice', teacherController.getTableNotice)
 router.post('/getTableReport', teacherController.getTableReport)
 router.post('/approveStudentReport', teacherController.approveStudentReport)
 
-
+router.get('/getMyProfile', teacherController.getMyProfile)
+router.post('/updateMyPassword', teacherController.updateMyPassword)
 
 module.exports = router

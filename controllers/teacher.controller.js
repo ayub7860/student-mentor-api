@@ -4,7 +4,8 @@ const {
   teacherTbl,
   studentTbl,
   noticeTbl,
-  weeklyReportTbl
+  weeklyReportTbl,
+  userTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -16,6 +17,62 @@ const generateBcryptSalt = async () => {
   }
   
 const teacherController = {}
+
+teacherController.getMyProfile = async function (req, res) {
+  try {
+    const totalTeacher = await teacherTbl.findByPk(req.uid);
+    const totalStudent = await studentTbl.count({where: { teacherIdFk : totalTeacher.id}});
+    const noticeTblObj = await noticeTbl.findAll({
+      where: {
+        type: { [Op.in]: [1, 3] }, // Fetch only type 2 or 3
+        status: 1
+      },
+      limit: 1,
+      order: [[ 'updatedAt', 'ASC']]
+    });
+    if (totalTeacher) {
+      res.status(200).json({ totalTeacher, noticeTblObj, totalStudent})
+    } else res.status(404).send('unable to get record')
+  } catch (err) {
+    handleSequelizeError(err, res, 'teacherController.getMyProfile')
+  }
+}
+
+teacherController.updateMyPassword = async function (req, res) {
+  try {
+    const { password, newPassword } = req.body
+    const salt = await generateBcryptSalt()
+    const hashedPassword = await bcrypt.hash(newPassword, salt)
+    await teacherTbl.isCorrectPassword(req.uid, password, (err, same) => {
+      if (err) {
+        res.status(500).json({ error: 'Existing password is incorrect.' })
+      } else {
+        if (same) {
+          try {
+            teacherTbl.update(
+              {
+                password: hashedPassword
+              },
+              {
+                where: {
+                  id: req.uid
+                }
+              }
+            )
+            res.status(200).json({ message: 'Password updated successfully.' })
+          } catch (err) {
+            handleSequelizeError(err, res, 'teacherController.updateMyPassword')
+          }
+        } else {
+          res.status(500).json({ error: 'Existing password is incorrect.' })
+        }
+      }
+    })
+  } catch (err) {
+    handleSequelizeError(err, res, 'teacherController.updateMyPassword')
+  }
+}
+
 
 // api for student
 teacherController.getTableStudent = async function (req, res) {
@@ -304,4 +361,5 @@ teacherController.approveStudentReport = async function (req, res) {
     handleSequelizeError(err, res, 'teacherController.approveStudentReport')
   }
 }
+
 module.exports = teacherController

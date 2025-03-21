@@ -38,7 +38,6 @@ adminController.getMyProfile = async function (req, res) {
   }
 }
 
-
 // api for teacher 
 adminController.getTableTeacher = async function (req, res) {
   try {

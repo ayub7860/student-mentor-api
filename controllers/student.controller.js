@@ -205,5 +205,39 @@ try {
 }
 }
 
+studentController.updateMyPassword = async function (req, res) {
+  try {
+    const { password, newPassword } = req.body
+    const salt = await generateBcryptSalt()
+    const hashedPassword = await bcrypt.hash(newPassword, salt)
+    await studentTbl.isCorrectPassword(req.uid, password, (err, same) => {
+      if (err) {
+        res.status(500).json({ error: 'Existing password is incorrect.' })
+      } else {
+        if (same) {
+          try {
+            studentTbl.update(
+              {
+                password: hashedPassword
+              },
+              {
+                where: {
+                  id: req.uid
+                }
+              }
+            )
+            res.status(200).json({ message: 'Password updated successfully.' })
+          } catch (err) {
+            handleSequelizeError(err, res, 'studentController.updateMyPassword')
+          }
+        } else {
+          res.status(500).json({ error: 'Existing password is incorrect.' })
+        }
+      }
+    })
+  } catch (err) {
+    handleSequelizeError(err, res, 'studentController.updateMyPassword')
+  }
+}
 
 module.exports = studentController

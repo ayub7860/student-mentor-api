@@ -8,5 +8,6 @@ router.get('/getMyProfile', studentController.getMyProfile)
 router.post('/getTableWeeklyReport', studentController.getTableWeeklyReport)
 router.post('/addWeeklyReport', studentController.addWeeklyReport)
 router.post('/updateWeeklyReport', studentController.updateWeeklyReport)
+router.post('/updateMyPassword', studentController.updateMyPassword)
 
 module.exports = router
