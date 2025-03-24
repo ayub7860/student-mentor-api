@@ -26,7 +26,7 @@ studentController.getMyProfile = async function (req, res) {
         status: 1
       },
       limit: 1,
-      order: [[ 'updatedAt', 'ASC']]
+      order: [[ 'updatedAt', 'DESC']]
     });
     if (studentTblObj) {
       res.status(200).json({ studentTblObj, noticeTblObj})
