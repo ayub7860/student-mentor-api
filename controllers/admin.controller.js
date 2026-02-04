@@ -5,7 +5,8 @@ const {
   studentTbl,
   noticeTbl,
   weeklyReportTbl,
-  userTbl
+  userTbl,
+  batchTbl
 } = require('../sequelize')
 const { handleSequelizeError } = require('../sequelizeErrorHandler')
 const bcrypt = require('bcrypt')
@@ -479,6 +480,104 @@ adminController.changeStatusNotice = async function (req, res) {
       })
   } catch (err) {
     handleSequelizeError(err, res, 'adminController.changeStatusNotice')
+  }
+}
+
+// api for batch
+adminController.getTableBatch = async function (req, res) {
+  try {
+    const { currentPage, perPage, orderBy, orderDirection, searchValue } = req.body
+    const perPageRecords = parseInt(perPage)
+    const page = parseInt(currentPage)
+    let start = page * perPageRecords - perPageRecords
+    const customerTblResult = await batchTbl.findAll({
+      where: {
+        [Op.or]: [
+          { name: { [Op.like]: '%' + searchValue + '%' } },
+        ]
+      },
+      order: [['createdAt', 'desc']],
+      offset: start,
+      limit: perPage
+    })
+    start++
+    const tableData = customerTblResult.map((obj, index) => {
+        return {
+            srno: start++,
+            id: obj.get('id'),
+            name: obj.get('name'),
+            status: obj.get('status'),
+            createdAt: obj.get('createdAt'),
+            updatedAt: obj.get('updatedAt')
+        }
+    })
+    const totalRecords = await batchTbl.count({
+      where: {
+        [Op.or]: [
+          { name: { [Op.like]: '%' + searchValue + '%' } },
+        ]
+      }
+    })
+    res.status(200).json({ totalRecords, tableData })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.getTableBatch')
+  }
+}
+
+adminController.addBatch = async function (req, res) {
+    try {
+      const { name } = req.body;
+      await batchTbl
+        .create({
+          name,
+          status: 1,
+          userIdFk : req.uid
+        })
+        .then((obj) => {
+          res.status(201).send('saved to database')
+        })
+        .catch((err) => {
+          handleSequelizeError(err, res, 'adminController.addBatch')
+        })
+    } catch (err) {
+      handleSequelizeError(err, res, 'adminController.addBatch')
+    }
+}
+
+adminController.updateBatch = async function (req, res) {
+  try {
+    const { id, name } = req.body
+    await batchTbl.update({
+      name,
+      userIdFk : req.uid
+  }, {
+    where: {
+      id
+    }
+  })
+  .then(() => {
+    res.status(201).send('saved to database')
+  })
+  .catch((err) => {
+    handleSequelizeError(err, res, 'adminController.updateBatch')
+  })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.updateBatch')
+  }
+}
+
+adminController.changeStatusBatch = async function (req, res) {
+  try {
+    const { id, statusValue } = req.body
+    await batchTbl.update({ status: statusValue }, { where: { id } })
+      .then(() => {
+        res.status(200).send('Data updated successfully')
+      })
+      .catch((err) => {
+        handleSequelizeError(err, res, 'adminController.changeStatusBatch')
+      })
+  } catch (err) {
+    handleSequelizeError(err, res, 'adminController.changeStatusBatch')
   }
 }
 

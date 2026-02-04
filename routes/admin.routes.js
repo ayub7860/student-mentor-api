@@ -25,6 +25,12 @@ router.post('/addNotice', adminController.addNotice)
 router.post('/changeStatusNotice', adminController.changeStatusNotice)
 router.post('/updateNotice', adminController.updateNotice)
 
+// batch routes
+router.post('/getTableBatch', adminController.getTableBatch)
+router.post('/addBatch', adminController.addBatch)
+router.post('/changeStatusBatch', adminController.changeStatusBatch)
+router.post('/updateBatch', adminController.updateBatch)
+
 // report api
 router.post('/getTableReport', adminController.getTableReport)
 
